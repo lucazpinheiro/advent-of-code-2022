@@ -29,7 +29,6 @@ func main() {
 	for fileScanner.Scan() {
 		elfCalorie := fileScanner.Text()
 		if elfCalorie == "" {
-			// fmt.Println("empty")
 			elvesCalories = append(elvesCalories, currentElfCalories)
 			currentElfCalories = 0
 			continue
