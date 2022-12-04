@@ -18,11 +18,14 @@ const (
 
 var possibleMoves = map[string]string{
 	"A": "rock",
-	"X": "rock",
 	"B": "paper",
-	"Y": "paper",
 	"C": "scissors",
-	"Z": "scissors",
+}
+
+var possibleOutcomes = map[string]string{
+	"X": "loss",
+	"Y": "draw",
+	"Z": "win",
 }
 
 func main() {
@@ -45,26 +48,37 @@ func main() {
 		round := fileScanner.Text()
 		moves := strings.Split(round, " ")
 		opponentMove := moves[0]
-		myMove := moves[1]
+		outcome := moves[1]
 
-		if possibleMoves[myMove] == possibleMoves[opponentMove] {
-			totalPoints += pointsByTurn("draw", myMove)
+		if possibleOutcomes[outcome] == "draw" {
+			totalPoints += pointsByTurn("draw", opponentMove)
 			continue
-		} else if possibleMoves[myMove] == "rock" && possibleMoves[opponentMove] == "scissors" {
+		} else if possibleOutcomes[outcome] == "win" {
+			myMove := ""
+			if possibleMoves[opponentMove] == "rock" {
+				myMove = "B"
+			} else if possibleMoves[opponentMove] == "paper" {
+				myMove = "C"
+			} else if possibleMoves[opponentMove] == "scissors" {
+				myMove = "A"
+			}
 			totalPoints += pointsByTurn("win", myMove)
 			continue
-		} else if possibleMoves[myMove] == "paper" && possibleMoves[opponentMove] == "rock" {
-			totalPoints += pointsByTurn("win", myMove)
-			continue
-		} else if possibleMoves[myMove] == "scissors" && possibleMoves[opponentMove] == "paper" {
-			totalPoints += pointsByTurn("win", myMove)
-			continue
-		} else {
+		} else if possibleOutcomes[outcome] == "loss" {
+			myMove := ""
+			if possibleMoves[opponentMove] == "rock" {
+				myMove = "C"
+			} else if possibleMoves[opponentMove] == "paper" {
+				myMove = "A"
+			} else if possibleMoves[opponentMove] == "scissors" {
+				myMove = "B"
+			}
 			totalPoints += pointsByTurn("loss", myMove)
 			continue
+		} else {
+			panic("invalid outcome")
 		}
 	}
-
 	fmt.Println("Total points", totalPoints)
 }
 
