@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"unicode"
+	"strings"
 )
 
 func main() {
@@ -43,19 +43,11 @@ func areOverlapping(pairedSections string) bool {
 	secondPairOpen := sections[2]
 	secondPairClose := sections[3]
 
-	if firstPairClose-firstPairOpen == 1 || secondPairClose-secondPairOpen == 1 {
-		return false
-	}
-
-	if firstPairOpen == secondPairOpen && firstPairClose == secondPairClose {
-		return false
-	}
-
-	if firstPairOpen <= secondPairOpen && secondPairClose <= firstPairClose {
+	if firstPairOpen <= secondPairOpen && firstPairClose >= secondPairClose {
 		return true
 	}
 
-	if secondPairOpen <= firstPairOpen && firstPairClose <= secondPairClose {
+	if secondPairOpen <= firstPairOpen && secondPairClose >= firstPairClose {
 		return true
 	}
 
@@ -63,15 +55,16 @@ func areOverlapping(pairedSections string) bool {
 }
 
 func splitSections(pairedSections string) []int {
+	splitedSections := strings.FieldsFunc(pairedSections, func(r rune) bool {
+		return r == '-' || r == ','
+	})
 	sections := make([]int, 0)
-	for _, char := range pairedSections {
-		if unicode.IsDigit(char) {
-			intValue, err := strconv.Atoi(string(char))
-			if err != nil {
-				panic("not numeric value in sections")
-			}
-			sections = append(sections, intValue)
+	for _, char := range splitedSections {
+		intValue, err := strconv.Atoi(string(char))
+		if err != nil {
+			panic("not numeric value in sections")
 		}
+		sections = append(sections, intValue)
 	}
 	if len(sections) == 0 {
 		panic("no sections")
