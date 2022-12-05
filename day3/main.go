@@ -5,8 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"unicode"
 )
+
+type stringSet map[string]struct{}
 
 var alphabet = map[string]int{}
 
@@ -32,35 +35,74 @@ func main() {
 	}
 
 	sumOfPriorities := 0
+	group := []string{}
 
 	for fileScanner.Scan() {
 		items := fileScanner.Text()
-		duplicatedItem, err := findDuplicatedItem(items)
+		group = append(group, items)
+		if len(group) < 3 {
+			continue
+		}
+		badge, err := findBadgeInGroup(group)
 		if err != nil {
 			panic(err)
 		}
 
-		if val, ok := alphabet[duplicatedItem]; ok {
-			sumOfPriorities += val
+		if priority, ok := alphabet[badge]; ok {
+			sumOfPriorities += priority
 		}
+		group = nil
 
 	}
 
 	fmt.Println(sumOfPriorities)
 }
 
-func findDuplicatedItem(items string) (string, error) {
-	splitPoint := len(items) / 2
-	firstHalf := items[:splitPoint]
-	secondHalf := items[splitPoint:]
+func findBadgeInGroup(group []string) (string, error) {
 
-	for _, firstHalfItem := range firstHalf {
-		for _, secondHalfItem := range secondHalf {
-			if firstHalfItem == secondHalfItem {
-				return string(firstHalfItem), nil
+	firstElfItems := stringSet{}
+	secondElfItems := stringSet{}
+	thirdElfItems := stringSet{}
+
+	for _, item := range group[0] {
+		firstElfItems[string(item)] = struct{}{}
+	}
+
+	for _, item := range group[1] {
+		secondElfItems[string(item)] = struct{}{}
+	}
+
+	for _, item := range group[2] {
+		thirdElfItems[string(item)] = struct{}{}
+	}
+
+	sets := []stringSet{
+		firstElfItems,
+		secondElfItems,
+		thirdElfItems,
+	}
+
+	sort.Slice(sets, func(i, j int) bool {
+		return len(sets[i]) > len(sets[j])
+	})
+
+	commonItems := []string{}
+
+	for firstSetKey, _ := range sets[0] {
+		for secondSetKey, _ := range sets[1] {
+			if firstSetKey == secondSetKey {
+				commonItems = append(commonItems, firstSetKey)
 			}
 		}
 	}
 
-	return "", errors.New("No duplicated item")
+	for _, key := range commonItems {
+		for thirdSetKey, _ := range sets[2] {
+			if key == thirdSetKey {
+				return key, nil
+			}
+		}
+	}
+
+	return "", errors.New("no badge found")
 }
