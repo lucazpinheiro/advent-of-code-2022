@@ -14,9 +14,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	defer func() {
-		readFile.Close()
-	}()
+	defer readFile.Close()
 
 	fileScanner := bufio.NewScanner(readFile)
 
@@ -43,23 +41,15 @@ func areOverlapping(pairedSections string) bool {
 	secondPairOpen := sections[2]
 	secondPairClose := sections[3]
 
-	if firstPairOpen <= secondPairOpen {
-		return true
+	if firstPairClose < secondPairOpen {
+		return false
 	}
 
-	if firstPairClose >= secondPairClose {
-		return true
+	if secondPairClose < firstPairOpen {
+		return false
 	}
 
-	if secondPairOpen <= firstPairOpen {
-		return true
-	}
-
-	if secondPairClose >= firstPairClose {
-		return true
-	}
-
-	return false
+	return true
 }
 
 func splitSections(pairedSections string) []int {
