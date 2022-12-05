@@ -43,11 +43,19 @@ func areOverlapping(pairedSections string) bool {
 	secondPairOpen := sections[2]
 	secondPairClose := sections[3]
 
-	if firstPairOpen <= secondPairOpen && firstPairClose >= secondPairClose {
+	if firstPairOpen <= secondPairOpen {
 		return true
 	}
 
-	if secondPairOpen <= firstPairOpen && secondPairClose >= firstPairClose {
+	if firstPairClose >= secondPairClose {
+		return true
+	}
+
+	if secondPairOpen <= firstPairOpen {
+		return true
+	}
+
+	if secondPairClose >= firstPairClose {
 		return true
 	}
 
