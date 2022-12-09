@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const blankSpaceRune = 32
+
 func main() {
 	readFile, err := os.Open("input.txt")
 	if err != nil {
@@ -17,100 +19,122 @@ func main() {
 	defer readFile.Close()
 
 	fileScanner := bufio.NewScanner(readFile)
-
 	fileScanner.Split(bufio.ScanLines)
 
-	finalCratesOrder := ""
-	cratesInput := make([]string, 0)
-	parseProcedures := false
-	crates := make(map[string][]string, 0)
+	crates := make([]string, 0)
+	procedures := make([]string, 0)
+	feedCratesInput := true
 
 	for fileScanner.Scan() {
 		input := fileScanner.Text()
-		if input == "" && !parseProcedures {
-			crates = handleCrates(cratesInput)
-			parseProcedures = true
+
+		if feedCratesInput {
+			if input == "" {
+				feedCratesInput = false
+				continue
+			}
+			crates = append(crates, input)
 			continue
 		}
-		cratesInput = append(cratesInput, input)
-		if parseProcedures {
-			executeProcedure(input, crates)
-		}
+
+		procedures = append(procedures, input)
 	}
 
-	fmt.Println(crates)
-	expectedFinalCratesOrder := "CMZ"
+	// fmt.Println(crates)
+	// fmt.Println(procedures)
+	stacks := mapCratesToStack(crates)
+	fmt.Println(stacks)
 
-	if finalCratesOrder == expectedFinalCratesOrder {
-		fmt.Println("passing")
+	for _, p := range procedures {
+		executeProcedure(p, stacks)
 	}
+
+	fmt.Println(stacks)
+
 }
 
-func executeProcedure(rawProcedure string, crates map[string][]string) {
-	procedure := strings.Split(rawProcedure, " ")
-	quantity, err := strconv.Atoi(procedure[1])
+func executeProcedure(procedure string, stack map[string][]string) {
+	slicedProcedure := strings.Split(procedure, " ")
+
+	quantity, err := strconv.Atoi(slicedProcedure[1])
 	if err != nil {
 		panic(err)
 	}
-	origin := procedure[3]
-	destiny := procedure[5]
 
-	for i := 1; i <= quantity; i++ {
-		crateOrigin := crates[origin]
-		lastElement := crateOrigin[len(crateOrigin)-1]
-		crates[origin] = crateOrigin[:len(crateOrigin)-1] // pop
+	origin := slicedProcedure[3]
+	destiny := slicedProcedure[5]
 
-		crates[destiny] = append(crates[destiny], lastElement)
+	for i := 1; i < quantity; i++ {
+		c := stack[origin][len(stack[origin])-1]
+		stack[origin] = stack[origin][:len(stack[origin])-1]
+
+		stack[destiny] = append(stack[destiny], c)
 	}
+
 }
 
-func parseCratesIdentifiers(s string) []string {
-	cratesIdentifiers := make([]string, 0)
-	acc := ""
-	for _, v := range s {
-		if string(v) == " " {
-			if acc != "" {
-				cratesIdentifiers = append(cratesIdentifiers, acc)
-				acc = ""
+func parseCratesString(s string) []string {
+	var slicedString = strings.Split(s, "")
+	var chunkSize = 4
+	var chunks [][]string
+	for i := 0; i < len(slicedString); i += chunkSize {
+		end := i + chunkSize
+
+		// necessary check to avoid slicing beyond
+		// slicedString capacity
+		if end > len(slicedString) {
+			end = len(slicedString)
+		}
+
+		chunks = append(chunks, slicedString[i:end])
+	}
+
+	var result []string
+
+	for _, c := range chunks {
+		if c[1] != " " {
+			result = append(result, c[1])
+		}
+	}
+
+	return result
+}
+
+func reverseList(list []string) []string {
+	var reversedList []string
+	for i := len(list) - 1; i >= 0; i-- {
+		reversedList = append(reversedList, list[i])
+	}
+	return reversedList
+}
+
+func mapCratesToStack(crates []string) map[string][]string {
+	cratesStacks := make(map[string][]string)
+
+	newKey := ""
+	for _, c := range crates[len(crates)-1] {
+		if c == blankSpaceRune {
+			if newKey != "" {
+				cratesStacks[newKey] = make([]string, 0)
 			}
+			newKey = ""
 			continue
 		}
-		acc += string(v)
-	}
-	return cratesIdentifiers
-}
-
-func handleCrates(cratesInput []string) map[string][]string {
-	identifiersLine := cratesInput[len(cratesInput)-1]
-	identifiers := parseCratesIdentifiers(identifiersLine)
-
-	crates := make(map[string][]string, 0)
-
-	for _, k := range identifiers {
-		crates[k] = []string{}
+		newKey += string(c)
 	}
 
-	for _, line := range cratesInput[:len(cratesInput)-1] {
-		currentCrane := 1
-		acc := 0
-		for _, char := range line {
-			if string(char) == " " {
-				acc++
-				continue
-			}
-			if string(char) == "[" || string(char) == "]" {
-				acc++
-				continue
-			}
-			if acc > 2 {
-				currentCrane += 1
-			}
-			crate := crates[fmt.Sprint(currentCrane)]
-			crate = append(crate, string(char))
-			crates[fmt.Sprint(currentCrane)] = crate
-			acc = 0
+	crates = crates[:len(crates)-1]
+
+	for _, crate := range crates {
+		for i, s := range parseCratesString(crate) {
+			cratesStacks[strconv.Itoa(i+1)] = append(cratesStacks[strconv.Itoa(i+1)], s)
 		}
+		// fmt.Println(i, parseCratesString(crate))
 	}
 
-	return crates
+	for k, v := range cratesStacks {
+		cratesStacks[k] = reverseList(v)
+	}
+
+	return cratesStacks
 }
